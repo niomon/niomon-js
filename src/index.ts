@@ -1,4 +1,4 @@
 export { NiomonAuthnAPI } from './api'
 export { NiomonClient } from './client'
 export { resolveServiceHost } from './utils'
-export * from './ditto'
+export * as ditto from './ditto'
