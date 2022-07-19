@@ -1,2 +1,1 @@
-# niomon-js
-Niomon SDK for JavaScript
+# Niomon SDK for JavaScript
