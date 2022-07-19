@@ -1,5 +1,5 @@
 import { providerProxy } from './debug'
-import EthereumProvider, { EthereumProviderOptions } from './ethereum-provider'
+import EthereumProvider from './ethereum-provider'
 import { Logger } from './ethereum-provider/types'
 
 const _window = (window as any)
@@ -94,7 +94,7 @@ const injectEthereumProvider = (opts: InjectEthereumProviderOptions) => {
   injectProviderHooks(updater, logger)
 }
 
-const updateCurrentProvider = (debugProxy: boolean = false, provider: any, logger?: Logger) => {
+const updateCurrentProvider = (debugProxy = false, provider: any, logger?: Logger) => {
   if (debugProxy) {
     logger?.debug('Debug: Full debug proxy enabled')
     currentProvider = providerProxy(provider, logger?.log)

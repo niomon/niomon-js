@@ -103,7 +103,7 @@ const createIFrame = (targetWindow: Window, url: string) => {
     console.warn('Removing previous ditto widget container element')
     oldIframe.remove()
   }
-  let iframe = targetWindow.document.createElement('iframe')
+  const iframe = targetWindow.document.createElement('iframe')
   iframe.id = WIDGET_CONTAINER_ID
   iframe.src = url
   iframe.allow = "clipboard-write";

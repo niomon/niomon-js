@@ -63,7 +63,7 @@ export class NiomonClient {
     if (!accessToken) {
       throw new Error('authorization is required')
     }
-    
+
     return axios.create({
       baseURL: this.options.baseURL,
       headers: {'Authorization': `Bearer ${accessToken}`}
@@ -133,7 +133,6 @@ export class NiomonClient {
       throw new Error('Popup blocked')
     }
     const messageOrigin = resolveServiceHost(url, 'app')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resp = await waitAuthorizationResponse(popup, messageOrigin) as any
     const token = await this.exchangeAuthCode(resp.code as string)
     await this.handleTokenResponse(token)
@@ -167,7 +166,7 @@ export class NiomonClient {
 
   /**
    * Exchanges authorization grant for access token.
-   * 
+   *
    * This is for when authorization code is initiated externally of the Niomon client.
    */
   public async exchangeAuthCode(code: string, codeVerifier?: string): Promise<TokenResponse>{
@@ -194,7 +193,7 @@ export class NiomonClient {
    * Refreshes the access token by using the refresh token to make
    * request to OIDC token endpoint.
    *
-   * It also stores the new refresh token and 
+   * It also stores the new refresh token and
    */
   public async refreshAccessToken(refreshToken?: string): Promise<void>{
     if (!refreshToken) {
@@ -213,7 +212,7 @@ export class NiomonClient {
       throw new Error('No refresh token')
     }
   }
-  
+
   /**
    * This is a private function that handles the token response. Usually this is used to
    * save the access token.
@@ -406,14 +405,12 @@ const waitAuthorizationResponse = (targetWindow: Window, origin: string): Promis
       }
       switch (evt.data.type) {
           case "authorization_response":
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (evt.source as any)?.close()
             if (evt.data.error) {
               reject(evt.data.error)
             } else {
               resolve(evt.data.response)
             }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             window.removeEventListener("message", handler, false)
             break
           default:

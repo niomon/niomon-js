@@ -29,7 +29,8 @@ export class WebMessageProviderBackend implements ProviderBackend {
   logger?: Logger
   responseReceivers: Record<number, (err?: Error, result?: any) => void> = {}
   nextId = 0
-  postMessage: (message: object) => void = (message) => {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+  postMessage: (message: object) => void = (_message) => {}
 
   constructor(targetWindow: Window, targetOrigin: string, logger?: Logger) {
     this.targetWindow = targetWindow
@@ -129,6 +130,7 @@ export class WebMessageProviderBackend implements ProviderBackend {
           this.logger?.warn("Ditto Provider: received invalid event payload: ", data.params)
           return
         }
+        // eslint-disable-next-line no-case-declarations
         const [eventName, ...args] = data.params
         this.emitEvent(eventName, ...args)
         break
@@ -257,7 +259,7 @@ export class BrowserProviderBackend implements ProviderBackend {
 
   private async requestAccounts(): Promise<string[]> {
     try {
-      var token = await this.niomonClient.getTokenSilently()
+      let token = await this.niomonClient.getTokenSilently()
       if (!token) {
         const redirectUri = new URL(window.location.href)
         redirectUri.search = ''
@@ -314,7 +316,7 @@ export class BrowserProviderBackend implements ProviderBackend {
     }
   }
 
-  private onBridgeEvent(eventName: string, ...args: any[]) {
+  private onBridgeEvent(eventName: string) {
     switch (eventName) {
       case 'ditto_did_logout':
         this.didLogout()
@@ -327,7 +329,10 @@ export class BrowserProviderBackend implements ProviderBackend {
     if (this.bridgePromise === undefined) {
       const container: WidgetContainer = new WidgetContainer(window, this.baseUrl, this.appId, this.chainId, this.logger)
       this.bridgePromise = container.onReady.then(container => {
-        const bridge = new WebMessageProviderBackend(container.contentWindow!, container.origin, this.logger)
+        if (!container.contentWindow) {
+          throw new Error('undefined contentWindow')
+        }
+        const bridge = new WebMessageProviderBackend(container.contentWindow, container.origin, this.logger)
         bridge.onEvent(this.onBridgeEvent.bind(this))
         return bridge
       })

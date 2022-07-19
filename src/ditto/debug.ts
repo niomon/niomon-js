@@ -5,7 +5,7 @@ export const providerProxy = (obj: any, logger = console.log) => {
 
 const proxy = (obj: any, name: string, logger = console.log) => {
   if (typeof obj === 'object') {
-    let props = Object.getOwnPropertyNames(obj)
+    const props = Object.getOwnPropertyNames(obj)
     if (obj.__proto__) {
       props.push(...Object.getOwnPropertyNames(obj.__proto__))
     }
@@ -18,7 +18,7 @@ const proxy = (obj: any, name: string, logger = console.log) => {
   }
 
   const handler = {
-    get: function(target: any, prop: any, receiver: any): any {
+    get: function(target: any, prop: any): any {
       const value = target[prop]
       if (!prop.startsWith('_') && typeof target !== 'function' && typeof value !== 'function') {
         logger(`Debug: ${name}.${prop} read:`, value)

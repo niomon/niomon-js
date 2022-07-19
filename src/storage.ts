@@ -24,7 +24,6 @@ export function resolveStorage (storage: string): StoreBase {
  */
 export function isBrowserStorageSupported () {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (store.isFake()){
       console.warn("Browser storage is not available")
       return false

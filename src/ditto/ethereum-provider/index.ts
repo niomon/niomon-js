@@ -77,6 +77,7 @@ export default class EthereumProvider {
   // MetaMask Experimental Method
   get _metamask() {
     if (this.isMetaMask) {
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const that = this
       return {
         isUnlocked() {
