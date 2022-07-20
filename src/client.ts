@@ -339,7 +339,7 @@ export class NiomonClient {
       return this.openIdConfiguration
     }
 
-    const resp = await this.http.get('/oidc/.well-known/openid-configuration')
+    const resp = await this.http.get('/.well-known/openid-configuration')
     this.openIdConfiguration = resp.data
     return resp.data
   }
