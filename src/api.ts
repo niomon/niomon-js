@@ -30,6 +30,11 @@ export class NiomonAuthnAPI {
     return resp.data as AuthenticationState
   }
 
+  async sendSmsPasscode (req: SendSmsPasscodeRequest): Promise<AuthenticationState> {
+    const resp = await this.http.post('/authn/v1/otp/sms/send', req)
+    return resp.data as AuthenticationState
+  }
+
   async authenticatePasscode (req: AuthenticatePasscodeRequest): Promise<AuthenticationState> {
     const resp = await this.http.post('/authn/v1/otp/authenticate', req)
     return resp.data as AuthenticationState
@@ -78,6 +83,12 @@ export interface AuthenticateWebAuthnRequest {
 export interface SendEmailPasscodeRequest {
   stateToken: string
   email: string
+  loginOrSignup: boolean
+}
+
+export interface SendSmsPasscodeRequest {
+  stateToken: string
+  phoneNumber: string
   loginOrSignup: boolean
 }
 
