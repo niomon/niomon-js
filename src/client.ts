@@ -247,7 +247,7 @@ export class NiomonClient {
         Authorization: `Bearer ${accessToken}`
       }
     })
-    return userInfoResponse.parse(resp.data)
+    return userInfoResponse.passthrough().parse(resp.data)
   }
 
   public async isAuthenticated(): Promise<boolean >{
