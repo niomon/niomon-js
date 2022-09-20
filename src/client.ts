@@ -99,8 +99,8 @@ export class NiomonClient {
     return `${this.options.baseURL}oidc/authorize?${query}`
   }
 
-  public loginWithRedirect(): void {
-    const url = this.buildAuthUrl()
+  public loginWithRedirect(params?: Record<string, string>): void {
+    const url = this.buildAuthUrl(params)
     window.location.assign(url)
   }
 
@@ -121,12 +121,13 @@ export class NiomonClient {
   /**
    * Opens a popup with the authorization endpoint.
    */
-  public async getTokenWithPopup(): Promise<string> {
+  public async getTokenWithPopup(params?: Record<string, string>): Promise<string> {
     const redirectUri = new URL(window.location.href)
     redirectUri.search = ''
     const url = this.buildAuthUrl({
       redirect_uri: redirectUri.toString(),
-      response_mode: 'web_message'
+      response_mode: 'web_message',
+      ...params
     })
     const popup = openPopup(url)
     if (!popup) {
