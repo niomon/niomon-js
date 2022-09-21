@@ -275,8 +275,14 @@ export class NiomonClient {
         // If the token is expiring soon (in the next 1 hour) or that it has
         // already expired, we will refresh the token now.
         console.debug('Access token is expired / expiring soon, refreshing as needed')
-        await this.refreshAccessToken(refreshToken)
-        return this.authenticationStatus(false)
+        try {
+          await this.refreshAccessToken(refreshToken)
+          return this.authenticationStatus(false)
+        } catch (err) {
+          console.error('Unable to refresh access token:', err)
+          // Do nothing, the access token could still be valid, we just can't
+          // refresh it now. The existing access token will be returned.
+        }
       }
 
       const expired = expiresAt ? expiresAt < new Date() : false
@@ -287,7 +293,7 @@ export class NiomonClient {
         expired,
       }
     } catch (err) {
-      console.warn('Unable to parse authorization response from token manager:', err)
+      console.error('Unable to parse authorization response from token manager:', err)
       return null
     }
   }
