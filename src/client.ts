@@ -57,8 +57,15 @@ export class NiomonClient {
    * Get an authenticated http client for request niomon server endpoint.
    *
    * Returns error if the client is not authenticated.
+   *
+   * By default, the access token is refreshed if it will expires soon. To
+   * disable this feature, pass the refreshIfNeeded argument as false.
    */
-  public async getAuthenticatedHttp(): Promise<AxiosInstance> {
+  public async getAuthenticatedHttp(refreshIfNeeded = true): Promise<AxiosInstance> {
+    if (refreshIfNeeded) {
+      await this.refreshAccessTokenIfNeeded()
+    }
+
     const accessToken = await this.getTokenSilently()
     if (!accessToken) {
       throw new Error('authorization is required')
@@ -256,10 +263,7 @@ export class NiomonClient {
     return !!authStatus && !authStatus.expired
   }
 
-  /**
-   * Returns the current authentication status (whether the user is logged in).
-   */
-  public async authenticationStatus(refreshIfNeeded = true): Promise<AuthenticationStatus | null> {
+  protected async refreshAccessTokenIfNeeded(): Promise<void> {
     try {
       const [response, expiresAt] = await Promise.all([
         this.lastTokenResponse(),
@@ -267,23 +271,43 @@ export class NiomonClient {
       ])
 
       if (!response) {
-        return null
+        return
       }
 
-      const refreshToken = response?.refresh_token
+      const refreshToken = response.refresh_token
       const expiringSoon = expiresAt ? expiresAt.getTime() - 60 * 60 * 1000 < Date.now() : false
-      if (expiringSoon && refreshToken && refreshIfNeeded) {
+      if (expiringSoon && refreshToken) {
         // If the token is expiring soon (in the next 1 hour) or that it has
         // already expired, we will refresh the token now.
         console.debug('Access token is expired / expiring soon, refreshing as needed')
         try {
           await this.refreshAccessToken(refreshToken)
-          return this.authenticationStatus(false)
         } catch (err) {
-          console.error('Unable to refresh access token:', err)
-          // Do nothing, the access token could still be valid, we just can't
-          // refresh it now. The existing access token will be returned.
+          console.warn('Unable to refresh access token:', err)
+          throw err
         }
+      }
+    } catch (err) {
+      console.error('Unable to check and refresh access token from token manager:', err)
+    }
+  }
+
+  /**
+   * Returns the current authentication status (whether the user is logged in).
+   */
+  public async authenticationStatus(refreshIfNeeded = true): Promise<AuthenticationStatus | null> {
+    try {
+      if (refreshIfNeeded) {
+        await this.refreshAccessTokenIfNeeded()
+      }
+
+      const [response, expiresAt] = await Promise.all([
+        this.lastTokenResponse(),
+        this.tokenExpiresAt()
+      ])
+
+      if (!response) {
+        return null
       }
 
       const expired = expiresAt ? expiresAt < new Date() : false
@@ -294,7 +318,7 @@ export class NiomonClient {
         expired,
       }
     } catch (err) {
-      console.error('Unable to parse authorization response from token manager:', err)
+      console.error('Unable to get authentication status from token manager:', err)
       return null
     }
   }
