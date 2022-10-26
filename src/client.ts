@@ -9,6 +9,8 @@ import { sha256 } from './crypto'
 import { base64url, resolveServiceHost } from './utils'
 
 import { TokenManager, BrowserTokenManager } from "./tokenManager"
+import { ethers } from 'ethers'
+import { WalletAuthWidgetContainer } from './wallet-auth-widget'
 
 const AUTH_STATE_STORAGE_KEY = 'niomon.auth_state'
 
@@ -28,10 +30,19 @@ export interface OpenIdConfiguration {
   end_session_endpoint?: string
 }
 
+export interface WalletOption {
+  tenant: string,
+  zone?: string,
+  // only support ethereum-based chainId for now.
+  // If chainId is not specified, the current connected chainId will be used.
+  chainId?: number,
+}
+
 export class NiomonClient {
   private readonly options: NiomonClientOptions
   private readonly tokenManager: TokenManager
   private readonly http: AxiosInstance
+  private walletAuthPromise: Promise<WalletAuthWidgetContainer> | undefined
   private openIdConfiguration: OpenIdConfiguration | null
 
   constructor (options: NiomonClientOptions, tokenManager?: TokenManager) {
@@ -239,6 +250,43 @@ export class NiomonClient {
       this.tokenManager.addObject('token_response', token),
       this.tokenManager.add('expires_at', `${expiresAt}`)
     ])
+  }
+
+  public async loginWithWallet(externalProvider: ethers.providers.ExternalProvider, options: WalletOption): Promise<void> {
+    const provider = new ethers.providers.Web3Provider(externalProvider)
+    // request account for subsequent signing
+    const accounts: string[] = await provider.send("eth_requestAccounts", [])
+
+    let chainId = parseInt(await provider.send("eth_chainId", []), 16)
+    if (options.chainId && options.chainId !== chainId) {
+      await provider.send("wallet_switchEthereumChain", ['0x'+options.chainId.toString(16)])
+      chainId = options.chainId
+    }
+
+    const walletAuth = await this.getWalletAuthWidget(options)
+
+    const challenge = await walletAuth.request('wallet_auth_challenge', {
+      address: accounts[0],
+      uri: window.location.href,
+      chainId,
+    })
+    const signatureResp = await provider.send("personal_sign", [accounts[0], challenge])
+
+    const token = await walletAuth.request('wallet_auth_authenticate', {
+      signature: signatureResp,
+      chainId,
+    })
+    await this.handleTokenResponse(token)
+  }
+
+  private getWalletAuthWidget(options: WalletOption): Promise<WalletAuthWidgetContainer> {
+    // Lazy load the wallet auth
+    if (this.walletAuthPromise === undefined) {
+      const zone = options.zone ? options.zone : ''
+      const container: WalletAuthWidgetContainer = new WalletAuthWidgetContainer(window, this.options.baseURL, options.tenant, zone, this.options.clientId)
+      this.walletAuthPromise = container.onReady
+    }
+    return this.walletAuthPromise
   }
 
   /**
