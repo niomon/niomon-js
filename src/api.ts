@@ -40,6 +40,16 @@ export class NiomonAuthnAPI {
     return resp.data as AuthenticationState
   }
 
+  async startWalletAuthenticate (networkName: string, req: StartWalletAuthenticateRequest): Promise<AuthenticationState> {
+    const resp = await this.http.post(`/authn/v1/wallet/${networkName}/start`, req)
+    return resp.data as AuthenticationState
+  }
+
+  async authenticateWallet (networkName: string, req: AuthenticateWalletRequest): Promise<AuthenticationState> {
+    const resp = await this.http.post(`/authn/v1/wallet/${networkName}/authenticate`, req)
+    return resp.data as AuthenticationState
+  }
+
   async getAuthenticationState (req: GetAuthenticationStateRequest): Promise<AuthenticationState> {
     const resp = await this.http.post('/authn/v1/get', req)
     return resp.data as AuthenticationState
@@ -97,6 +107,20 @@ export interface AuthenticatePasscodeRequest {
   code: string
 }
 
+export interface StartWalletAuthenticateRequest {
+  stateToken: string
+  clientId: string
+  address: string
+  uri: string
+  domain: string
+  loginOrSignup: boolean
+}
+
+export interface AuthenticateWalletRequest {
+  stateToken: string
+  signature: string
+}
+
 export interface GetAuthenticationStateRequest {
   stateToken: string
 }
@@ -104,6 +128,7 @@ export interface GetAuthenticationStateRequest {
 export interface AuthenticationState {
   stateToken: string
   status: string
+  walletChallenge: string
 }
 
 export interface GetEnrollmentStateRequest {
